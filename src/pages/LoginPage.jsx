@@ -8,61 +8,55 @@ import { LogIn, Eye, EyeOff, UserPlus, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import VistoriaHeader from '@/components/vistoria/VistoriaHeader';
 
-const ADMIN_EMAIL = "kauankg@hotmail.com";
-
-const getUsers = () => JSON.parse(localStorage.getItem('users') || '[]');
-const setUsers = (users) => localStorage.setItem('users', JSON.stringify(users));
-
-const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
+const LoginPage = ({ onLoginSuccess }) => {
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
-    setIsRegistering(false); // Sempre começa no login
-    // Cadastro automático do admin se não existir
-    const users = getUsers();
-    if (!users.find(u => u.email === 'kauankg@hotmail.com')) {
-      users.push({
-        id: Date.now(),
-        email: 'kauankg@hotmail.com',
-        password: 'Kauan134778@',
-        type: 'admin',
-        status: 'active',
-        nomeEmpresa: '',
-        logoUrl: ''
-      });
-      setUsers(users);
+    const storedUser = localStorage.getItem('locauto_user_credentials');
+    if (!storedUser) {
+      setIsRegistering(true);
     }
   }, []);
 
   const handleRegister = (e) => {
     e.preventDefault();
-    if (email !== ADMIN_EMAIL) {
-      toast({ title: "Cadastro restrito", description: "Apenas o admin pode ser cadastrado por aqui.", variant: "destructive" });
+    if (password !== confirmPassword) {
+      toast({
+        title: "Erro no Cadastro",
+        description: "As senhas não coincidem.",
+        variant: "destructive",
+      });
       return;
     }
     if (password.length < 6) {
-      toast({ title: "Senha Fraca", description: "A senha deve ter pelo menos 6 caracteres.", variant: "destructive" });
+      toast({
+        title: "Senha Fraca",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
       return;
     }
+
     setIsLoading(true);
     setTimeout(() => {
-      const users = getUsers();
-      if (users.find(u => u.email === email)) {
-        toast({ title: "Já existe", description: "Este e-mail já está cadastrado.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-      }
-      users.push({ id: Date.now(), email, password, type: 'admin', status: 'active', nomeEmpresa: '', logoUrl: '' });
-      setUsers(users);
-      toast({ title: "Admin cadastrado!", description: "Faça login para continuar.", className: "bg-green-500 text-white" });
+      const credentials = { username, password };
+      localStorage.setItem('locauto_user_credentials', JSON.stringify(credentials));
+      toast({
+        title: "Cadastro Realizado!",
+        description: "Sua conta foi criada. Faça login para continuar.",
+        className: "bg-green-500 text-white",
+      });
       setIsRegistering(false);
-      setEmail('');
+      setUsername('');
       setPassword('');
+      setConfirmPassword('');
       setIsLoading(false);
     }, 500);
   };
@@ -71,28 +65,39 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
     e.preventDefault();
     setIsLoading(true);
     setTimeout(() => {
-      const users = getUsers();
-      const user = users.find(u => u.email === email && u.password === password);
-      if (!user) {
-        toast({ title: "Falha no Login", description: "E-mail ou senha incorretos.", variant: "destructive" });
+      const storedCredentialsString = localStorage.getItem('locauto_user_credentials');
+      if (!storedCredentialsString) {
+        toast({
+          title: "Conta Não Encontrada",
+          description: "Nenhuma conta cadastrada. Por favor, crie uma conta.",
+          variant: "destructive",
+        });
+        setIsRegistering(true);
         setIsLoading(false);
         return;
       }
-      if (user.status === 'frozen') {
-        toast({ title: "Conta congelada", description: "Entre em contato com o administrador.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-      }
-      if (user.type === 'admin') {
-        toast({ title: "Login Admin", description: "Bem-vindo, admin!", className: "bg-green-500 text-white" });
-        onAdminLogin && onAdminLogin(user);
+      
+      const storedCredentials = JSON.parse(storedCredentialsString);
+      if (username === storedCredentials.username && password === storedCredentials.password) {
+        toast({
+          title: "Login Bem-Sucedido!",
+          description: "Bem-vindo de volta!",
+          className: "bg-green-500 text-white",
+        });
+        onLoginSuccess();
       } else {
-        toast({ title: "Login Bem-Sucedido!", description: "Bem-vindo!", className: "bg-green-500 text-white" });
-        onLoginSuccess && onLoginSuccess(user);
+        toast({
+          title: "Falha no Login",
+          description: "Usuário ou senha incorretos. Tente novamente.",
+          variant: "destructive",
+        });
       }
       setIsLoading(false);
     }, 500);
   };
+
+  const cardTitle = isRegistering ? "Criar Nova Conta" : "Acesso Restrito";
+  const IconTitle = isRegistering ? UserPlus : LogIn;
 
   return (
     <motion.div 
@@ -101,33 +106,24 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
       transition={{ duration: 0.5 }}
       className="flex flex-col items-center justify-start min-h-screen p-4 pt-8 md:pt-16"
     >
-      {/* Banner do sistema */}
-      <div className="w-full max-w-md mx-auto mb-6 mt-4">
-        <div className="rounded-xl shadow-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white p-6 flex flex-col items-center">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 tracking-tight">Sistema de Checklist</h1>
-          <p className="text-sm sm:text-base font-medium opacity-90 text-center">
-            Gerencie suas vistorias e manutenções de forma simples e profissional.
-          </p>
-        </div>
-      </div>
-      {/* <VistoriaHeader /> */}
+      <VistoriaHeader />
       <Card className="w-full max-w-md shadow-2xl mt-8">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center text-gray-700 flex items-center justify-center">
-            {isRegistering ? <UserPlus className="h-8 w-8 mr-3 text-purple-600" /> : <LogIn className="h-8 w-8 mr-3 text-purple-600" />}
-            {isRegistering ? "Cadastrar Admin" : "Entrar na sua conta"}
+            <IconTitle className="h-8 w-8 mr-3 text-purple-600" />
+            {cardTitle}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-6">
             <div>
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="username">Usuário</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Crie ou digite seu usuário"
                 required
                 className="mt-1"
                 disabled={isLoading}
@@ -156,6 +152,31 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </Button>
             </div>
+            {isRegistering && (
+              <div className="relative">
+                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirme sua senha"
+                  required
+                  className="mt-1 pr-10"
+                  disabled={isLoading}
+                />
+                 <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-7 h-8 w-8 text-gray-500 hover:text-gray-700"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </Button>
+              </div>
+            )}
             <CardFooter className="pt-6 flex flex-col items-center gap-4">
               <Button type="submit" size="lg" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-10 py-3 text-lg" disabled={isLoading}>
                 {isLoading ? (
@@ -168,14 +189,19 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
                 ) : (
                   isRegistering ? <Save className="mr-2 h-5 w-5" /> : <LogIn className="mr-2 h-5 w-5" />
                 )}
-                {isRegistering ? "Cadastrar" : "Entrar"}
+                {isRegistering ? "Criar Conta" : "Entrar"}
               </Button>
+              {!isRegistering && (
+                <Button type="button" variant="link" onClick={() => {setIsRegistering(true); setUsername(''); setPassword('');}} disabled={isLoading}>
+                  Não tem uma conta? Crie uma agora!
+                </Button>
+              )}
             </CardFooter>
           </form>
         </CardContent>
       </Card>
       <p className="text-xs text-gray-500 mt-6">
-        {isRegistering ? "Cadastro restrito ao admin." : "Acesso para clientes e administração."}
+        {isRegistering ? "Após criar, você será direcionado para o login." : "Acesso exclusivo para administração."}
       </p>
     </motion.div>
   );

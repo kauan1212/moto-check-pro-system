@@ -10,8 +10,6 @@ import { CalendarClock, Wrench as Tool, Send, User, Bike as BikeIcon, CalendarDa
 import { motion } from 'framer-motion';
 import VistoriaHeader from '@/components/vistoria/VistoriaHeader'; 
 
-const getUsers = () => JSON.parse(localStorage.getItem('users') || '[]');
-
 const AgendamentoPublicoPage = ({ onSolicitacaoEnviada }) => {
   const { toast } = useToast();
   const [nomeLocatario, setNomeLocatario] = useState('');
@@ -21,21 +19,14 @@ const AgendamentoPublicoPage = ({ onSolicitacaoEnviada }) => {
   const [horarioAgendado, setHorarioAgendado] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [telefoneContato, setTelefoneContato] = useState('');
-  const [empresaId, setEmpresaId] = useState(null);
-  const [empresaData, setEmpresaData] = useState(null);
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const nome = params.get('nome');
     const placa = params.get('placa');
-    const empresa = params.get('empresa');
     if (nome) setNomeLocatario(decodeURIComponent(nome));
     if (placa) setPlacaMoto(decodeURIComponent(placa));
-    if (empresa) {
-      setEmpresaId(empresa);
-      const user = getUsers().find(u => String(u.id) === String(empresa));
-      if (user) setEmpresaData(user);
-    }
   }, []);
 
   const handleSubmit = (e) => {
@@ -77,26 +68,9 @@ const AgendamentoPublicoPage = ({ onSolicitacaoEnviada }) => {
     agendamentosPublicos.push(agendamentoPublicoData);
     localStorage.setItem('agendamentosPublicos', JSON.stringify(agendamentosPublicos));
     
-    // Montar mensagem para WhatsApp
-    if (empresaData?.telefone) {
-      const msg = `Olá! Gostaria de agendar uma manutenção:
-
-*Nome:* ${nomeLocatario}
-*Telefone para contato:* ${telefoneContato}
-*Placa da moto:* ${placaMoto}
-*Tipo de manutenção:* ${tipoServico.replace('_', ' ')}
-*Data desejada:* ${dataAgendada.split('-').reverse().join('/')}\n*Horário desejado:* ${horarioAgendado}${observacoes ? `\n*Observações:* ${observacoes}` : ''}`;
-      const url = `https://wa.me/${empresaData.telefone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank');
-    }
-
     toast({
       title: "Solicitação Enviada!",
-      description: (
-        <span>
-          Sua solicitação foi enviada. {empresaData?.telefone && (<a href={`https://wa.me/${empresaData.telefone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Clique aqui para falar com a empresa no WhatsApp</a>)}
-        </span>
-      ),
+      description: "Sua solicitação de agendamento foi enviada. Entraremos em contato para confirmar.",
       className: "bg-green-500 text-white",
     });
 
@@ -120,15 +94,7 @@ const AgendamentoPublicoPage = ({ onSolicitacaoEnviada }) => {
       transition={{ duration: 0.6 }}
       className="container mx-auto p-4 max-w-2xl flex flex-col items-center pt-8 md:pt-16"
     >
-      {empresaData && (
-        <VistoriaHeader
-          nomeEmpresa={empresaData.nomeEmpresa}
-          descricaoEmpresa={empresaData.descricaoEmpresa}
-          logoUrl={empresaData.logoUrl}
-          telefone={empresaData.telefone}
-          endereco={empresaData.endereco}
-        />
-      )}
+      <VistoriaHeader />
       <Card className="mt-8 w-full card-shadow">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-gray-700 flex items-center justify-center">
@@ -185,7 +151,7 @@ const AgendamentoPublicoPage = ({ onSolicitacaoEnviada }) => {
                 <SelectTrigger id="tipoServicoPublico" className="mt-1">
                   <SelectValue placeholder="Selecione o tipo de serviço" />
                 </SelectTrigger>
-                <SelectContent className="bg-white" position="popper">
+                <SelectContent>
                   <SelectItem value="corretiva">Manutenção Corretiva</SelectItem>
                   <SelectItem value="preventiva">Manutenção Preventiva</SelectItem>
                   <SelectItem value="troca_oleo">Troca de Óleo</SelectItem>

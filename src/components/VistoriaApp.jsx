@@ -28,7 +28,7 @@ const initialVistoriaData = {
   observacoes_finais_texto: '', 
 };
 
-const VistoriaApp = ({ initialData: externalInitialData, clearInitialData, user }) => {
+const VistoriaApp = ({ initialData: externalInitialData, clearInitialData }) => {
   const { toast } = useToast();
   const [vistoriaData, setVistoriaData] = useState(() => {
     const savedDataString = localStorage.getItem('vistoriaData')
@@ -201,14 +201,7 @@ const VistoriaApp = ({ initialData: externalInitialData, clearInitialData, user 
     if (!validateForm()) return;
 
     try {
-      await generatePDF(
-        vistoriaData,
-        currentChecklistItems,
-        user?.nomeEmpresa || '',
-        user?.telefone || '',
-        user?.endereco || '',
-        user?.logoUrl || ''
-      );
+      await generatePDF(vistoriaData, currentChecklistItems);
       toast({
         title: "PDF gerado com sucesso!",
         description: "O relatório de vistoria foi baixado automaticamente.",
@@ -221,7 +214,7 @@ const VistoriaApp = ({ initialData: externalInitialData, clearInitialData, user 
         variant: "destructive",
       });
     }
-  }, [validateForm, vistoriaData, toast, currentChecklistItems, user]);
+  }, [validateForm, vistoriaData, toast, currentChecklistItems]);
 
   return (
     <div className="container mx-auto p-1 sm:p-2 max-w-4xl">

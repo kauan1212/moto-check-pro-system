@@ -15,8 +15,6 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import VistoriaHeader from '@/components/vistoria/VistoriaHeader';
 import { PwaInstallProvider } from '@/components/PwaInstallPrompt';
-import LoginPage from '@/pages/LoginPage';
-import AdminPanel from '@/pages/AdminPanel';
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('vistoria'); 
@@ -24,8 +22,6 @@ const App = () => {
   const [agendamentoParaAnalisar, setAgendamentoParaAnalisar] = useState(null);
   const { toast } = useToast();
   const SEU_NUMERO_WHATSAPP = "5515991653601"; 
-  const [user, setUser] = useState(null);
-  const [adminMode, setAdminMode] = useState(false);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -114,7 +110,7 @@ const App = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'vistoria':
-        return <VistoriaApp initialData={vistoriaInitialData} clearInitialData={() => setVistoriaInitialData(null)} user={user} />;
+        return <VistoriaApp initialData={vistoriaInitialData} clearInitialData={() => setVistoriaInitialData(null)} />;
       case 'locatarios':
         return <LocatariosPage onSelectLocatario={handleSelectLocatarioForVistoria} />;
       case 'motos':
@@ -124,75 +120,44 @@ const App = () => {
       case 'agendar-publico':
         return <AgendamentoPublicoPage onSolicitacaoEnviada={handleNovaSolicitacaoPublica}/>;
       default:
-        return <VistoriaApp initialData={vistoriaInitialData} clearInitialData={() => setVistoriaInitialData(null)} user={user} />;
+        return <VistoriaApp initialData={vistoriaInitialData} clearInitialData={() => setVistoriaInitialData(null)} />;
     }
   };
   
   const showHeaderAndMenu = currentPage !== 'agendar-publico';
-
-  const hash = window.location.hash.replace('#/', '');
-  if (hash === 'agendar-publico') {
-    return (
-      <PwaInstallProvider>
-        <LoginPage onLoginSuccess={setUser} onAdminLogin={u => { setUser(u); setAdminMode(true); }} />
-      </PwaInstallProvider>
-    );
-  }
-  if (!user) {
-    return (
-      <PwaInstallProvider>
-        <LoginPage onLoginSuccess={setUser} onAdminLogin={u => { setUser(u); setAdminMode(true); }} />
-      </PwaInstallProvider>
-    );
-  }
-
-  if (adminMode) {
-    return (
-      <PwaInstallProvider>
-        <AdminPanel onLogout={() => { setUser(null); setAdminMode(false); }} />
-      </PwaInstallProvider>
-    );
-  }
 
   return (
     <PwaInstallProvider>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
         {showHeaderAndMenu && (
           <header className="bg-white shadow-md sticky top-0 z-50">
-            <div className="container mx-auto px-1 py-1 sm:px-2 sm:py-2 flex items-center justify-between">
-              <VistoriaHeader
-                nomeEmpresa={user?.nomeEmpresa}
-                descricaoEmpresa={user?.descricaoEmpresa}
-                logoUrl={user?.logoUrl}
-                telefone={user?.telefone}
-                endereco={user?.endereco}
-              />
-              <Button variant="outline" className="ml-2" onClick={() => setUser(null)}>Sair</Button>
+            <div className="container mx-auto px-1 py-1 sm:px-2 sm:py-2">
+              <VistoriaHeader />
+              <NavigationMenu className="mt-1 sm:mt-2">
+                <NavigationMenuList className="flex flex-wrap justify-center gap-0.5 sm:gap-1">
+                  <NavigationMenuItem>
+                    <Button variant={currentPage === 'vistoria' ? "default" : "ghost"} onClick={() => navigateTo('vistoria')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
+                      <FileText size={14} /> <span className="hidden sm:inline">Vistoria</span>
+                    </Button>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                     <Button variant={currentPage === 'locatarios' ? "default" : "ghost"} onClick={() => navigateTo('locatarios')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
+                      <UserPlus size={14} /> <span className="hidden sm:inline">Locatários</span>
+                    </Button>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Button variant={currentPage === 'motos' ? "default" : "ghost"} onClick={() => navigateTo('motos')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
+                      <Bike size={14} /> <span className="hidden sm:inline">Motos</span>
+                    </Button>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                     <Button variant={currentPage === 'agendamentos' ? "default" : "ghost"} onClick={() => navigateTo('agendamentos')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
+                      <CalendarClock size={14} /> <span className="hidden sm:inline">Agendamentos</span>
+                    </Button>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
             </div>
-            <NavigationMenu className="mt-1 sm:mt-2">
-              <NavigationMenuList className="flex flex-wrap justify-center gap-0.5 sm:gap-1">
-                <NavigationMenuItem>
-                  <Button variant={currentPage === 'vistoria' ? "default" : "ghost"} onClick={() => navigateTo('vistoria')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
-                    <FileText size={14} /> <span className="hidden sm:inline">Vistoria</span>
-                  </Button>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                   <Button variant={currentPage === 'locatarios' ? "default" : "ghost"} onClick={() => navigateTo('locatarios')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
-                    <UserPlus size={14} /> <span className="hidden sm:inline">Locatários</span>
-                  </Button>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Button variant={currentPage === 'motos' ? "default" : "ghost"} onClick={() => navigateTo('motos')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
-                    <Bike size={14} /> <span className="hidden sm:inline">Motos</span>
-                  </Button>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                   <Button variant={currentPage === 'agendamentos' ? "default" : "ghost"} onClick={() => navigateTo('agendamentos')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
-                    <CalendarClock size={14} /> <span className="hidden sm:inline">Agendamentos</span>
-                  </Button>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
           </header>
         )}
         
