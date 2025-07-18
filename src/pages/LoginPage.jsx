@@ -23,6 +23,20 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
 
   useEffect(() => {
     setIsRegistering(false); // Sempre começa no login
+    // Cadastro automático do admin se não existir
+    const users = getUsers();
+    if (!users.find(u => u.email === 'kauankg@hotmail.com')) {
+      users.push({
+        id: Date.now(),
+        email: 'kauankg@hotmail.com',
+        password: 'Kauan134778@',
+        type: 'admin',
+        status: 'active',
+        nomeEmpresa: '',
+        logoUrl: ''
+      });
+      setUsers(users);
+    }
   }, []);
 
   const handleRegister = (e) => {
