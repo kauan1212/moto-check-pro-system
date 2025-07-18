@@ -53,22 +53,26 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
     setIsLoading(true);
     const { error } = await signIn(email, password);
     setIsLoading(false);
-    if (!error) {
-      // Buscar dados do usuário na tabela users para saber se é admin ou cliente
-      const { data, error: userError } = await import('@/lib/customSupabaseClient').then(m => m.supabase)
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single();
-      if (userError || !data) {
-        toast({ title: "Erro ao buscar usuário", description: userError?.message || "Usuário não encontrado.", variant: "destructive" });
-        return;
-      }
-      if (data.type === 'admin') {
-        onAdminLogin && onAdminLogin(data);
-      } else {
-        onLoginSuccess && onLoginSuccess(data);
-      }
+    if (error) {
+      toast({ title: "Erro no login", description: error.message, variant: "destructive" });
+      console.error("Erro no login:", error);
+      return;
+    }
+    // Buscar dados do usuário na tabela users para saber se é admin ou cliente
+    const { data, error: userError } = await import('@/lib/customSupabaseClient').then(m => m.supabase)
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    if (userError || !data) {
+      toast({ title: "Erro ao buscar usuário", description: userError?.message || "Usuário não encontrado.", variant: "destructive" });
+      console.error("Erro ao buscar usuário:", userError);
+      return;
+    }
+    if (data.type === 'admin') {
+      onAdminLogin && onAdminLogin(data);
+    } else {
+      onLoginSuccess && onLoginSuccess(data);
     }
   };
 
