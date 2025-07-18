@@ -4,12 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Phone, MapPin, DownloadCloud } from 'lucide-react';
 import { usePwaInstall } from '@/components/PwaInstallPrompt';
 
-const logoUrl = 'https://storage.googleapis.com/hostinger-horizons-assets-prod/ac761713-0f01-4aa3-a0ce-b3d2354486eb/cdda750bcbce7f37693d3220c262eb0e.jpg';
-const CNPJ = "55.050.610/0001-91";
-const TELEFONE = "(15) 99165-3601";
-const ENDERECO = "Rua Francisco Catalano 395 - Jardim Brasilândia";
+// Valores padrão temporários para evitar erro de variável não definida
+const nomeEmpresa = "Nome da Empresa";
+const descricaoEmpresa = "Descrição da Empresa";
+const logoUrl = "/icons/icon-192x192.png";
+const CNPJ = "";
+const TELEFONE = "";
+const ENDERECO = "";
 
-const VistoriaHeader = () => {
+const VistoriaHeader = ({
+  nomeEmpresa = "Nome da Empresa",
+  descricaoEmpresa = "Descrição da Empresa",
+  logoUrl = "/icons/icon-192x192.png",
+  telefone = "",
+  endereco = ""
+}) => {
   const { deferredPrompt, triggerInstall } = usePwaInstall();
 
   return (
@@ -28,14 +37,13 @@ const VistoriaHeader = () => {
             </div>
           </div>
           <div className="text-center xxs:text-right space-y-0.5 mt-1 xxs:mt-0">
-            <p className="text-xxs sm:text-xs font-semibold leading-tight">CNPJ: {CNPJ}</p>
             <div className="flex items-center justify-center xxs:justify-end gap-1 text-xxs sm:text-xs leading-tight">
               <Phone size={10} sm:size={12} className="opacity-80" />
-              <span>{TELEFONE}</span>
+              <span>{telefone}</span>
             </div>
             <div className="flex items-center justify-center xxs:justify-end gap-1 text-xxs sm:text-xs leading-tight">
               <MapPin size={10} sm:size={12} className="opacity-80" />
-              <span>{ENDERECO}</span>
+              <span>{endereco}</span>
             </div>
           </div>
         </div>

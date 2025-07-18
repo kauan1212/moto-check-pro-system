@@ -83,7 +83,6 @@ export const generatePDF = async (vistoriaData, checklistItems) => {
   const headerTextX = margin + (logoDataUrl ? 65 : 0); 
   let companyInfoY = yPosition;
   companyInfoY = addText(nomeEmpresa, headerTextX, companyInfoY, { fontSize: 16, style: 'bold', color: [0, 90, 110] });
-  companyInfoY = addText(`CNPJ: ${CNPJ_EMPRESA}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
   companyInfoY = addText(`Telefone: ${TELEFONE_EMPRESA}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
   companyInfoY = addText(`Endereço: ${ENDERECO_EMPRESA}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
 
