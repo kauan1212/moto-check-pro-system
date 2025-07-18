@@ -6,7 +6,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { useToast } from '@/components/ui/use-toast';
 import { PlusCircle, Edit, Trash2, Search, User, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '@/lib/customSupabaseClient';
 
 const LocatariosPage = ({ onSelectLocatario }) => {
   const { toast } = useToast();
@@ -14,21 +13,19 @@ const LocatariosPage = ({ onSelectLocatario }) => {
   const [nomeCompleto, setNomeCompleto] = useState('');
   const [rg, setRg] = useState('');
   const [telefone, setTelefone] = useState(''); 
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [editingLocatario, setEditingLocatario] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   useEffect(() => {
-    fetchLocatarios();
+    const storedLocatarios = JSON.parse(localStorage.getItem('locatarios')) || [];
+    setLocatarios(storedLocatarios);
   }, []);
 
-  const fetchLocatarios = async () => {
-    const { data, error } = await supabase.from('locatarios').select('*');
-    if (error) {
-      toast({ title: 'Erro ao buscar locatários', description: error.message, variant: 'destructive' });
-    } else {
-      setLocatarios(data);
-    }
+  const saveLocatarios = (updatedLocatarios) => {
+    setLocatarios(updatedLocatarios);
+    localStorage.setItem('locatarios', JSON.stringify(updatedLocatarios));
   };
 
   const resetForm = () => {
@@ -39,12 +36,13 @@ const LocatariosPage = ({ onSelectLocatario }) => {
     setIsFormVisible(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!nomeCompleto || !rg || !telefone ) { 
       toast({ title: "Campos Obrigatórios", description: "Nome Completo, RG e Telefone são obrigatórios.", variant: "destructive" });
       return;
     }
+    
     const telefoneRegex = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
     if (!telefoneRegex.test(telefone)) {
         toast({
@@ -54,25 +52,19 @@ const LocatariosPage = ({ onSelectLocatario }) => {
         });
         return;
     }
+
+    const locatarioData = { id: editingLocatario?.id || Date.now().toString(), nomeCompleto, rg, telefone };
+
+    let updatedLocatarios;
     if (editingLocatario) {
-      const { error } = await supabase.from('locatarios').update({ nomeCompleto, rg, telefone }).eq('id', editingLocatario.id);
-      if (error) {
-        toast({ title: 'Erro ao atualizar locatário', description: error.message, variant: 'destructive' });
-      } else {
-        toast({ title: "Locatário Atualizado!", description: `${nomeCompleto} foi atualizado com sucesso.` });
-        fetchLocatarios();
-        resetForm();
-      }
+      updatedLocatarios = locatarios.map(l => l.id === editingLocatario.id ? locatarioData : l);
+      toast({ title: "Locatário Atualizado!", description: `${nomeCompleto} foi atualizado com sucesso.` });
     } else {
-      const { error } = await supabase.from('locatarios').insert([{ nomeCompleto, rg, telefone }]);
-      if (error) {
-        toast({ title: 'Erro ao cadastrar locatário', description: error.message, variant: 'destructive' });
-      } else {
-        toast({ title: "Locatário Cadastrado!", description: `${nomeCompleto} foi cadastrado com sucesso.` });
-        fetchLocatarios();
-        resetForm();
-      }
+      updatedLocatarios = [...locatarios, locatarioData];
+      toast({ title: "Locatário Cadastrado!", description: `${nomeCompleto} foi cadastrado com sucesso.` });
     }
+    saveLocatarios(updatedLocatarios);
+    resetForm();
   };
 
   const handleEdit = (locatario) => {
@@ -84,26 +76,36 @@ const LocatariosPage = ({ onSelectLocatario }) => {
     window.scrollTo(0, 0);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (window.confirm("Tem certeza que deseja excluir este locatário? Esta ação também removerá motos e agendamentos vinculados a ele.")) {
-      const { error } = await supabase.from('locatarios').delete().eq('id', id);
-      if (error) {
-        toast({ title: 'Erro ao excluir locatário', description: error.message, variant: 'destructive' });
-      } else {
-        toast({ title: "Locatário Excluído!", description: "O locatário e seus dados vinculados foram excluídos." });
-        fetchLocatarios();
-      }
+      const updatedLocatarios = locatarios.filter(l => l.id !== id);
+      saveLocatarios(updatedLocatarios);
+      
+      const motosAtuais = JSON.parse(localStorage.getItem('motos')) || [];
+      const motosMantidas = motosAtuais.filter(m => String(m.locatarioId) !== String(id));
+      localStorage.setItem('motos', JSON.stringify(motosMantidas));
+
+      const agendamentosAtuais = JSON.parse(localStorage.getItem('agendamentos')) || [];
+      const agendamentosMantidos = agendamentosAtuais.filter(a => {
+        const locatarioDoAgendamento = locatarios.find(loc => String(loc.id) === String(a.locatarioId));
+        return !locatarioDoAgendamento || String(locatarioDoAgendamento.id) !== String(id);
+      });
+      localStorage.setItem('agendamentos', JSON.stringify(agendamentosMantidos));
+
+      toast({ title: "Locatário Excluído!", description: "O locatário e seus dados vinculados foram excluídos." });
     }
   };
 
   const handleSelectAndGoToVistoria = (locatario) => {
-    // Para buscar motos vinculadas, será necessário migrar motos para Supabase também
+    const motosCadastradas = JSON.parse(localStorage.getItem('motos')) || [];
+    const motoDoLocatario = motosCadastradas.find(m => String(m.locatarioId) === String(locatario.id));
+
     toast({
       title: "Locatário Selecionado!",
-      description: `${locatario.nomeCompleto} foi selecionado. Redirecionando para vistoria...`,
+      description: `${locatario.nomeCompleto} ${motoDoLocatario ? `e a moto ${motoDoLocatario.modelo} (${motoDoLocatario.placa}) foram selecionados` : 'foi selecionado'}. Redirecionando para vistoria...`,
     });
     if(onSelectLocatario) {
-      onSelectLocatario(locatario, null); // Ajustar depois para buscar moto vinculada do Supabase
+      onSelectLocatario(locatario, motoDoLocatario);
     }
   };
 

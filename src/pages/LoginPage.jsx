@@ -7,7 +7,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { LogIn, Eye, EyeOff, UserPlus, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import VistoriaHeader from '@/components/vistoria/VistoriaHeader';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const ADMIN_EMAIL = "kauankg@hotmail.com";
 
@@ -16,21 +15,31 @@ const setUsers = (users) => localStorage.setItem('users', JSON.stringify(users))
 
 const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
   const { toast } = useToast();
-  const { signIn, signUp, user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [showForgot, setShowForgot] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotLoading, setForgotLoading] = useState(false);
 
   useEffect(() => {
     setIsRegistering(false); // Sempre começa no login
+    // Cadastro automático do admin se não existir
+    const users = getUsers();
+    if (!users.find(u => u.email === 'kauankg@hotmail.com')) {
+      users.push({
+        id: Date.now(),
+        email: 'kauankg@hotmail.com',
+        password: 'Kauan134778@',
+        type: 'admin',
+        status: 'active',
+        nomeEmpresa: '',
+        logoUrl: ''
+      });
+      setUsers(users);
+    }
   }, []);
 
-  const handleRegister = async (e) => {
+  const handleRegister = (e) => {
     e.preventDefault();
     if (email !== ADMIN_EMAIL) {
       toast({ title: "Cadastro restrito", description: "Apenas o admin pode ser cadastrado por aqui.", variant: "destructive" });
@@ -41,57 +50,48 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
       return;
     }
     setIsLoading(true);
-    const { error } = await signUp(email, password);
-    setIsLoading(false);
-    if (!error) {
+    setTimeout(() => {
+      const users = getUsers();
+      if (users.find(u => u.email === email)) {
+        toast({ title: "Já existe", description: "Este e-mail já está cadastrado.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+      }
+      users.push({ id: Date.now(), email, password, type: 'admin', status: 'active', nomeEmpresa: '', logoUrl: '' });
+      setUsers(users);
       toast({ title: "Admin cadastrado!", description: "Faça login para continuar.", className: "bg-green-500 text-white" });
       setIsRegistering(false);
       setEmail('');
       setPassword('');
-    }
+      setIsLoading(false);
+    }, 500);
   };
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    const { error } = await signIn(email, password);
-    setIsLoading(false);
-    if (error) {
-      toast({ title: "Erro no login", description: error.message, variant: "destructive" });
-      console.error("Erro no login:", error);
-      return;
-    }
-    // Buscar dados do usuário na tabela users para saber se é admin ou cliente
-    const { data, error: userError } = await import('@/lib/customSupabaseClient').then(m => m.supabase)
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
-    if (userError || !data) {
-      toast({ title: "Erro ao buscar usuário", description: userError?.message || "Usuário não encontrado.", variant: "destructive" });
-      console.error("Erro ao buscar usuário:", userError);
-      return;
-    }
-    if (data.type === 'admin') {
-      onAdminLogin && onAdminLogin(data);
-    } else {
-      onLoginSuccess && onLoginSuccess(data);
-    }
-  };
-
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    setForgotLoading(true);
-    const { supabase } = await import('@/lib/customSupabaseClient');
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail);
-    setForgotLoading(false);
-    if (error) {
-      toast({ title: 'Erro ao enviar e-mail', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'E-mail enviado!', description: 'Verifique sua caixa de entrada para redefinir a senha.' });
-      setShowForgot(false);
-      setForgotEmail('');
-    }
+    setTimeout(() => {
+      const users = getUsers();
+      const user = users.find(u => u.email === email && u.password === password);
+      if (!user) {
+        toast({ title: "Falha no Login", description: "E-mail ou senha incorretos.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+      }
+      if (user.status === 'frozen') {
+        toast({ title: "Conta congelada", description: "Entre em contato com o administrador.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+      }
+      if (user.type === 'admin') {
+        toast({ title: "Login Admin", description: "Bem-vindo, admin!", className: "bg-green-500 text-white" });
+        onAdminLogin && onAdminLogin(user);
+      } else {
+        toast({ title: "Login Bem-Sucedido!", description: "Bem-vindo!", className: "bg-green-500 text-white" });
+        onLoginSuccess && onLoginSuccess(user);
+      }
+      setIsLoading(false);
+    }, 500);
   };
 
   return (
@@ -170,37 +170,8 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
                 )}
                 {isRegistering ? "Cadastrar" : "Entrar"}
               </Button>
-              {!isRegistering && (
-                <Button type="button" variant="link" onClick={() => setShowForgot(true)} disabled={isLoading}>
-                  Esqueci minha senha
-                </Button>
-              )}
             </CardFooter>
           </form>
-          {showForgot && (
-            <div className="mt-6 p-4 border rounded bg-gray-50">
-              <form onSubmit={handleForgotPassword} className="space-y-3">
-                <Label htmlFor="forgotEmail">E-mail para redefinir senha</Label>
-                <Input
-                  id="forgotEmail"
-                  type="email"
-                  value={forgotEmail}
-                  onChange={e => setForgotEmail(e.target.value)}
-                  placeholder="Digite seu e-mail"
-                  required
-                  disabled={forgotLoading}
-                />
-                <div className="flex gap-2 mt-2">
-                  <Button type="submit" disabled={forgotLoading}>
-                    {forgotLoading ? 'Enviando...' : 'Enviar link de redefinição'}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setShowForgot(false)} disabled={forgotLoading}>
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            </div>
-          )}
         </CardContent>
       </Card>
       <p className="text-xs text-gray-500 mt-6">

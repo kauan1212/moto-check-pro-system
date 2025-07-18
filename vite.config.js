@@ -1,7 +1,6 @@
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { createLogger, defineConfig } from 'vite';
-import { VitePWA } from 'vite-plugin-pwa';
 
 const isDev = process.env.NODE_ENV !== 'production';
 let inlineEditPlugin, editModeDevPlugin;
@@ -195,14 +194,7 @@ export default defineConfig({
 	plugins: [
 		...(isDev ? [inlineEditPlugin(), editModeDevPlugin()] : []),
 		react(),
-		addTransformIndexHtml,
-		VitePWA({
-			registerType: 'autoUpdate',
-			manifest: require('./public/manifest.json'),
-			devOptions: {
-				enabled: true
-			}
-		})
+		addTransformIndexHtml
 	],
 	server: {
 		cors: true,
