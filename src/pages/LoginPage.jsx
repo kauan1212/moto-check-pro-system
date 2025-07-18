@@ -22,6 +22,9 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   useEffect(() => {
     setIsRegistering(false); // Sempre começa no login
@@ -73,6 +76,21 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
       onAdminLogin && onAdminLogin(data);
     } else {
       onLoginSuccess && onLoginSuccess(data);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    const { supabase } = await import('@/lib/customSupabaseClient');
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail);
+    setForgotLoading(false);
+    if (error) {
+      toast({ title: 'Erro ao enviar e-mail', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'E-mail enviado!', description: 'Verifique sua caixa de entrada para redefinir a senha.' });
+      setShowForgot(false);
+      setForgotEmail('');
     }
   };
 
@@ -152,8 +170,37 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
                 )}
                 {isRegistering ? "Cadastrar" : "Entrar"}
               </Button>
+              {!isRegistering && (
+                <Button type="button" variant="link" onClick={() => setShowForgot(true)} disabled={isLoading}>
+                  Esqueci minha senha
+                </Button>
+              )}
             </CardFooter>
           </form>
+          {showForgot && (
+            <div className="mt-6 p-4 border rounded bg-gray-50">
+              <form onSubmit={handleForgotPassword} className="space-y-3">
+                <Label htmlFor="forgotEmail">E-mail para redefinir senha</Label>
+                <Input
+                  id="forgotEmail"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  placeholder="Digite seu e-mail"
+                  required
+                  disabled={forgotLoading}
+                />
+                <div className="flex gap-2 mt-2">
+                  <Button type="submit" disabled={forgotLoading}>
+                    {forgotLoading ? 'Enviando...' : 'Enviar link de redefinição'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowForgot(false)} disabled={forgotLoading}>
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
         </CardContent>
       </Card>
       <p className="text-xs text-gray-500 mt-6">
