@@ -64,9 +64,9 @@ const AgendamentoPublicoPage = ({ onSolicitacaoEnviada }) => {
       status: 'solicitado_pelo_cliente'
     };
     
-    const agendamentosPublicos = JSON.parse(localStorage.getItem('agendamentosPublicosLocAuto')) || [];
+    const agendamentosPublicos = JSON.parse(localStorage.getItem('agendamentosPublicos')) || [];
     agendamentosPublicos.push(agendamentoPublicoData);
-    localStorage.setItem('agendamentosPublicosLocAuto', JSON.stringify(agendamentosPublicos));
+    localStorage.setItem('agendamentosPublicos', JSON.stringify(agendamentosPublicos));
     
     toast({
       title: "Solicitação Enviada!",

@@ -17,13 +17,13 @@ const VistoriaHeader = () => {
       <CardHeader className="p-2 sm:p-3">
         <div className="flex flex-col xxs:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <img src={logoUrl} alt="LocAuto Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-md shadow-lg border border-white" />
+            <img src={logoUrl} alt="Logo da Empresa" className="w-10 h-10 sm:w-12 sm:h-12 rounded-md shadow-lg border border-white" />
             <div>
               <CardTitle className="text-lg sm:text-xl font-bold leading-tight">
-                LocAuto
+                {nomeEmpresa}
               </CardTitle>
               <p className="text-xxs sm:text-xs font-medium opacity-90 leading-tight">
-                Aluguel de Motos
+                {descricaoEmpresa}
               </p>
             </div>
           </div>

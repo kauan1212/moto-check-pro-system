@@ -82,7 +82,7 @@ export const generatePDF = async (vistoriaData, checklistItems) => {
 
   const headerTextX = margin + (logoDataUrl ? 65 : 0); 
   let companyInfoY = yPosition;
-  companyInfoY = addText('LocAuto - Aluguel de Motos', headerTextX, companyInfoY, { fontSize: 16, style: 'bold', color: [0, 90, 110] });
+  companyInfoY = addText(nomeEmpresa, headerTextX, companyInfoY, { fontSize: 16, style: 'bold', color: [0, 90, 110] });
   companyInfoY = addText(`CNPJ: ${CNPJ_EMPRESA}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
   companyInfoY = addText(`Telefone: ${TELEFONE_EMPRESA}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
   companyInfoY = addText(`Endereço: ${ENDERECO_EMPRESA}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
@@ -229,7 +229,7 @@ export const generatePDF = async (vistoriaData, checklistItems) => {
   }
   pdf.setDrawColor(100, 100, 100);
   pdf.line(signatureXvistoriador, signatureY + signatureHeight + 4, signatureXvistoriador + signatureWidth, signatureY + signatureHeight + 4);
-  let textYVistoriador = addText('Vistoriador (LocAuto)', signatureXvistoriador, signatureY + signatureHeight + 12, { fontSize: 8, maxWidth: signatureWidth });
+  let textYVistoriador = addText('Vistoriador', signatureXvistoriador, signatureY + signatureHeight + 12, { fontSize: 8, maxWidth: signatureWidth });
   addText(`CNPJ: ${CNPJ_EMPRESA}`, signatureXvistoriador, textYVistoriador, { fontSize: 7, maxWidth: signatureWidth });
 
 
@@ -251,7 +251,7 @@ export const generatePDF = async (vistoriaData, checklistItems) => {
     pdf.setPage(i);
     pdf.setFontSize(7);
     pdf.setTextColor(120, 120, 120);
-    const footerText = `Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')} | LocAuto`;
+    const footerText = `Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')} | ${nomeEmpresa}`;
     const footerPageText = `Página ${i} de ${totalPages}`;
     
     const footerTextWidth = pdf.getStringUnitWidth(footerText) * 7 / pdf.internal.scaleFactor;
@@ -259,6 +259,6 @@ export const generatePDF = async (vistoriaData, checklistItems) => {
     pdf.text(footerPageText, pageWidth - margin - (pdf.getStringUnitWidth(footerPageText) * 7 / pdf.internal.scaleFactor), pageHeight - margin / 2.5);
   }
 
-  const fileName = `Vistoria_LocAuto_${vistoriaData.placa || 'S_PLACA'}_${vistoriaData.data.replace(/-/g, '')}.pdf`;
+  const fileName = `Vistoria_${nomeEmpresa.replace(/\s/g, '')}_${vistoriaData.placa || 'S_PLACA'}_${vistoriaData.data.replace(/-/g, '')}.pdf`;
   pdf.save(fileName);
 };

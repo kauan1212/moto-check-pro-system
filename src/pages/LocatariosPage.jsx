@@ -19,13 +19,13 @@ const LocatariosPage = ({ onSelectLocatario }) => {
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   useEffect(() => {
-    const storedLocatarios = JSON.parse(localStorage.getItem('locatariosLocAuto')) || [];
+    const storedLocatarios = JSON.parse(localStorage.getItem('locatarios')) || [];
     setLocatarios(storedLocatarios);
   }, []);
 
   const saveLocatarios = (updatedLocatarios) => {
     setLocatarios(updatedLocatarios);
-    localStorage.setItem('locatariosLocAuto', JSON.stringify(updatedLocatarios));
+    localStorage.setItem('locatarios', JSON.stringify(updatedLocatarios));
   };
 
   const resetForm = () => {
@@ -81,23 +81,23 @@ const LocatariosPage = ({ onSelectLocatario }) => {
       const updatedLocatarios = locatarios.filter(l => l.id !== id);
       saveLocatarios(updatedLocatarios);
       
-      const motosAtuais = JSON.parse(localStorage.getItem('motosLocAuto')) || [];
+      const motosAtuais = JSON.parse(localStorage.getItem('motos')) || [];
       const motosMantidas = motosAtuais.filter(m => String(m.locatarioId) !== String(id));
-      localStorage.setItem('motosLocAuto', JSON.stringify(motosMantidas));
+      localStorage.setItem('motos', JSON.stringify(motosMantidas));
 
-      const agendamentosAtuais = JSON.parse(localStorage.getItem('agendamentosLocAuto')) || [];
+      const agendamentosAtuais = JSON.parse(localStorage.getItem('agendamentos')) || [];
       const agendamentosMantidos = agendamentosAtuais.filter(a => {
         const locatarioDoAgendamento = locatarios.find(loc => String(loc.id) === String(a.locatarioId));
         return !locatarioDoAgendamento || String(locatarioDoAgendamento.id) !== String(id);
       });
-      localStorage.setItem('agendamentosLocAuto', JSON.stringify(agendamentosMantidos));
+      localStorage.setItem('agendamentos', JSON.stringify(agendamentosMantidos));
 
       toast({ title: "Locatário Excluído!", description: "O locatário e seus dados vinculados foram excluídos." });
     }
   };
 
   const handleSelectAndGoToVistoria = (locatario) => {
-    const motosCadastradas = JSON.parse(localStorage.getItem('motosLocAuto')) || [];
+    const motosCadastradas = JSON.parse(localStorage.getItem('motos')) || [];
     const motoDoLocatario = motosCadastradas.find(m => String(m.locatarioId) === String(locatario.id));
 
     toast({

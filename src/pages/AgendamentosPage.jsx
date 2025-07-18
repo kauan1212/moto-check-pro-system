@@ -39,10 +39,10 @@ const AgendamentosPage = ({ initialAgendamentoParaAnalisar, clearInitialAgendame
   const agendamentoPublicoUrl = `${window.location.origin}${window.location.pathname}#/agendar-publico`;
 
   useEffect(() => {
-    setAgendamentos(JSON.parse(localStorage.getItem('agendamentosLocAuto')) || []);
-    setLocatarios(JSON.parse(localStorage.getItem('locatariosLocAuto')) || []);
-    setMotos(JSON.parse(localStorage.getItem('motosLocAuto')) || []);
-    setAgendamentosPublicos(JSON.parse(localStorage.getItem('agendamentosPublicosLocAuto')) || []);
+    setAgendamentos(JSON.parse(localStorage.getItem('agendamentos')) || []);
+    setLocatarios(JSON.parse(localStorage.getItem('locatarios')) || []);
+    setMotos(JSON.parse(localStorage.getItem('motos')) || []);
+    setAgendamentosPublicos(JSON.parse(localStorage.getItem('agendamentosPublicos')) || []);
   }, []);
 
   useEffect(() => {
@@ -58,12 +58,12 @@ const AgendamentosPage = ({ initialAgendamentoParaAnalisar, clearInitialAgendame
   
   const saveAgendamentosInternos = useCallback((updatedAgendamentos) => {
     setAgendamentos(updatedAgendamentos);
-    localStorage.setItem('agendamentosLocAuto', JSON.stringify(updatedAgendamentos));
+    localStorage.setItem('agendamentos', JSON.stringify(updatedAgendamentos));
   }, []);
 
   const saveAgendamentosPublicos = useCallback((updatedAgendamentosPublicos) => {
     setAgendamentosPublicos(updatedAgendamentosPublicos);
-    localStorage.setItem('agendamentosPublicosLocAuto', JSON.stringify(updatedAgendamentosPublicos));
+    localStorage.setItem('agendamentosPublicos', JSON.stringify(updatedAgendamentosPublicos));
   }, []);
   
   const motosFiltradasPorLocatario = formState.locatarioId 

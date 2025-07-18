@@ -29,15 +29,15 @@ const MotosPage = () => {
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   useEffect(() => {
-    const storedMotos = JSON.parse(localStorage.getItem('motosLocAuto')) || [];
+    const storedMotos = JSON.parse(localStorage.getItem('motos')) || [];
     setMotos(storedMotos);
-    const storedLocatarios = JSON.parse(localStorage.getItem('locatariosLocAuto')) || [];
+    const storedLocatarios = JSON.parse(localStorage.getItem('locatarios')) || [];
     setLocatarios(storedLocatarios);
   }, []);
 
   const saveMotos = (updatedMotos) => {
     setMotos(updatedMotos);
-    localStorage.setItem('motosLocAuto', JSON.stringify(updatedMotos));
+    localStorage.setItem('motos', JSON.stringify(updatedMotos));
   };
 
   const resetForm = () => {

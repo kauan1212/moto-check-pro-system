@@ -31,7 +31,7 @@ const initialVistoriaData = {
 const VistoriaApp = ({ initialData: externalInitialData, clearInitialData }) => {
   const { toast } = useToast();
   const [vistoriaData, setVistoriaData] = useState(() => {
-    const savedDataString = localStorage.getItem('vistoriaDataLocAuto');
+    const savedDataString = localStorage.getItem('vistoriaData')
     let loadedData = { ...initialVistoriaData };
     if (savedDataString) {
       try {
@@ -43,7 +43,7 @@ const VistoriaApp = ({ initialData: externalInitialData, clearInitialData }) => 
         }
       } catch (error) {
         console.error("Erro ao parsear dados salvos da vistoria:", error);
-        localStorage.removeItem('vistoriaDataLocAuto'); 
+        localStorage.removeItem('vistoriaData'); 
       }
     }
     return loadedData;
@@ -76,7 +76,7 @@ const VistoriaApp = ({ initialData: externalInitialData, clearInitialData }) => 
   
 
   useEffect(() => {
-    localStorage.setItem('vistoriaDataLocAuto', JSON.stringify(vistoriaData));
+    localStorage.setItem('vistoriaData', JSON.stringify(vistoriaData));
   }, [vistoriaData]);
 
   const handleInputChange = useCallback((field, value) => {
@@ -135,7 +135,7 @@ const VistoriaApp = ({ initialData: externalInitialData, clearInitialData }) => 
     if (window.confirm("Tem certeza que deseja limpar todos os dados da vistoria? Esta ação não pode ser desfeita.")) {
       const newInitialData = {...initialVistoriaData, data: new Date().toISOString().split('T')[0], fotos: {}, checklist: {}, observacoes_finais_texto: ''};
       setVistoriaData(newInitialData);
-      localStorage.removeItem('vistoriaDataLocAuto');
+      localStorage.removeItem('vistoriaData');
       toast({
         title: "Formulário Limpo",
         description: "Todos os dados da vistoria foram removidos.",
