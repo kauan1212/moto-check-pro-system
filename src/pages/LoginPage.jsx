@@ -22,11 +22,7 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
-    // Se não houver admin cadastrado, habilita cadastro do admin
-    const users = getUsers();
-    if (!users.find(u => u.type === 'admin')) {
-      setIsRegistering(true);
-    }
+    setIsRegistering(false); // Sempre começa no login
   }, []);
 
   const handleRegister = (e) => {
@@ -153,7 +149,7 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
               </Button>
               {!isRegistering && (
                 <Button type="button" variant="link" onClick={() => setIsRegistering(true)} disabled={isLoading}>
-                  Não tem uma conta? (Apenas admin pode se cadastrar)
+                  Cadastrar admin
                 </Button>
               )}
             </CardFooter>
