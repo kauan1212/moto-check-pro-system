@@ -1,10 +1,5 @@
 import jsPDF from 'jspdf';
 
-const newLogoUrl = 'https://storage.googleapis.com/hostinger-horizons-assets-prod/ac761713-0f01-4aa3-a0ce-b3d2354486eb/cdda750bcbce7f37693d3220c262eb0e.jpg';
-const CNPJ_EMPRESA = "55.050.610/0001-91";
-const TELEFONE_EMPRESA = "(15) 99165-3601";
-const ENDERECO_EMPRESA = "Rua Francisco Catalano 395 - Jardim Brasilândia";
-
 const imageToDataUrl = async (url) => {
   try {
     const response = await fetch(url);
@@ -24,7 +19,7 @@ const imageToDataUrl = async (url) => {
   }
 };
 
-export const generatePDF = async (vistoriaData, checklistItems) => {
+export const generatePDF = async (vistoriaData, checklistItems, nomeEmpresa, telefoneEmpresa, enderecoEmpresa, logoUrl) => {
   const pdf = new jsPDF('p', 'pt', 'a4');
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -70,7 +65,7 @@ export const generatePDF = async (vistoriaData, checklistItems) => {
     return y + textHeight;
   };
 
-  const logoDataUrl = await imageToDataUrl(newLogoUrl);
+  const logoDataUrl = await imageToDataUrl(logoUrl);
   let logoHeight = 0;
   if (logoDataUrl) {
     const imgProps = pdf.getImageProperties(logoDataUrl);
@@ -83,8 +78,8 @@ export const generatePDF = async (vistoriaData, checklistItems) => {
   const headerTextX = margin + (logoDataUrl ? 65 : 0); 
   let companyInfoY = yPosition;
   companyInfoY = addText(nomeEmpresa, headerTextX, companyInfoY, { fontSize: 16, style: 'bold', color: [0, 90, 110] });
-  companyInfoY = addText(`Telefone: ${TELEFONE_EMPRESA}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
-  companyInfoY = addText(`Endereço: ${ENDERECO_EMPRESA}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
+  companyInfoY = addText(`Telefone: ${telefoneEmpresa}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
+  companyInfoY = addText(`Endereço: ${enderecoEmpresa}`, headerTextX, companyInfoY, { fontSize: 7, color: [70, 70, 70] });
 
   yPosition = Math.max(yPosition + logoHeight, companyInfoY) + sectionGap;
   
@@ -229,7 +224,7 @@ export const generatePDF = async (vistoriaData, checklistItems) => {
   pdf.setDrawColor(100, 100, 100);
   pdf.line(signatureXvistoriador, signatureY + signatureHeight + 4, signatureXvistoriador + signatureWidth, signatureY + signatureHeight + 4);
   let textYVistoriador = addText('Vistoriador', signatureXvistoriador, signatureY + signatureHeight + 12, { fontSize: 8, maxWidth: signatureWidth });
-  addText(`CNPJ: ${CNPJ_EMPRESA}`, signatureXvistoriador, textYVistoriador, { fontSize: 7, maxWidth: signatureWidth });
+  addText(`CNPJ: ${vistoriaData.cnpjEmpresa}`, signatureXvistoriador, textYVistoriador, { fontSize: 7, maxWidth: signatureWidth });
 
 
   if (vistoriaData.assinaturaLocatario) {
