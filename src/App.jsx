@@ -114,7 +114,7 @@ const App = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'vistoria':
-        return <VistoriaApp initialData={vistoriaInitialData} clearInitialData={() => setVistoriaInitialData(null)} />;
+        return <VistoriaApp initialData={vistoriaInitialData} clearInitialData={() => setVistoriaInitialData(null)} user={user} />;
       case 'locatarios':
         return <LocatariosPage onSelectLocatario={handleSelectLocatarioForVistoria} />;
       case 'motos':
@@ -124,7 +124,7 @@ const App = () => {
       case 'agendar-publico':
         return <AgendamentoPublicoPage onSolicitacaoEnviada={handleNovaSolicitacaoPublica}/>;
       default:
-        return <VistoriaApp initialData={vistoriaInitialData} clearInitialData={() => setVistoriaInitialData(null)} />;
+        return <VistoriaApp initialData={vistoriaInitialData} clearInitialData={() => setVistoriaInitialData(null)} user={user} />;
     }
   };
   
