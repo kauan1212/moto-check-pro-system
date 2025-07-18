@@ -87,7 +87,16 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
       transition={{ duration: 0.5 }}
       className="flex flex-col items-center justify-start min-h-screen p-4 pt-8 md:pt-16"
     >
-      <VistoriaHeader />
+      {/* Banner do sistema */}
+      <div className="w-full max-w-md mx-auto mb-6 mt-4">
+        <div className="rounded-xl shadow-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white p-6 flex flex-col items-center">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 tracking-tight">Sistema de Checklist</h1>
+          <p className="text-sm sm:text-base font-medium opacity-90 text-center">
+            Gerencie suas vistorias e manutenções de forma simples e profissional.
+          </p>
+        </div>
+      </div>
+      {/* <VistoriaHeader /> */}
       <Card className="w-full max-w-md shadow-2xl mt-8">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center text-gray-700 flex items-center justify-center">
@@ -147,11 +156,6 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
                 )}
                 {isRegistering ? "Cadastrar" : "Entrar"}
               </Button>
-              {!isRegistering && (
-                <Button type="button" variant="link" onClick={() => setIsRegistering(true)} disabled={isLoading}>
-                  Cadastrar admin
-                </Button>
-              )}
             </CardFooter>
           </form>
         </CardContent>
