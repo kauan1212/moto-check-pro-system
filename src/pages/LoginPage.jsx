@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { LogIn, Eye, EyeOff, UserPlus, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import VistoriaHeader from '@/components/vistoria/VistoriaHeader';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const ADMIN_EMAIL = "kauankg@hotmail.com";
 
@@ -15,6 +16,7 @@ const setUsers = (users) => localStorage.setItem('users', JSON.stringify(users))
 
 const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
   const { toast } = useToast();
+  const { signIn, signUp, user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,23 +25,9 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
 
   useEffect(() => {
     setIsRegistering(false); // Sempre começa no login
-    // Cadastro automático do admin se não existir
-    const users = getUsers();
-    if (!users.find(u => u.email === 'kauankg@hotmail.com')) {
-      users.push({
-        id: Date.now(),
-        email: 'kauankg@hotmail.com',
-        password: 'Kauan134778@',
-        type: 'admin',
-        status: 'active',
-        nomeEmpresa: '',
-        logoUrl: ''
-      });
-      setUsers(users);
-    }
   }, []);
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (email !== ADMIN_EMAIL) {
       toast({ title: "Cadastro restrito", description: "Apenas o admin pode ser cadastrado por aqui.", variant: "destructive" });
@@ -50,48 +38,38 @@ const LoginPage = ({ onLoginSuccess, onAdminLogin }) => {
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      const users = getUsers();
-      if (users.find(u => u.email === email)) {
-        toast({ title: "Já existe", description: "Este e-mail já está cadastrado.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-      }
-      users.push({ id: Date.now(), email, password, type: 'admin', status: 'active', nomeEmpresa: '', logoUrl: '' });
-      setUsers(users);
+    const { error } = await signUp(email, password);
+    setIsLoading(false);
+    if (!error) {
       toast({ title: "Admin cadastrado!", description: "Faça login para continuar.", className: "bg-green-500 text-white" });
       setIsRegistering(false);
       setEmail('');
       setPassword('');
-      setIsLoading(false);
-    }, 500);
+    }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      const users = getUsers();
-      const user = users.find(u => u.email === email && u.password === password);
-      if (!user) {
-        toast({ title: "Falha no Login", description: "E-mail ou senha incorretos.", variant: "destructive" });
-        setIsLoading(false);
+    const { error } = await signIn(email, password);
+    setIsLoading(false);
+    if (!error) {
+      // Buscar dados do usuário na tabela users para saber se é admin ou cliente
+      const { data, error: userError } = await import('@/lib/customSupabaseClient').then(m => m.supabase)
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+      if (userError || !data) {
+        toast({ title: "Erro ao buscar usuário", description: userError?.message || "Usuário não encontrado.", variant: "destructive" });
         return;
       }
-      if (user.status === 'frozen') {
-        toast({ title: "Conta congelada", description: "Entre em contato com o administrador.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-      }
-      if (user.type === 'admin') {
-        toast({ title: "Login Admin", description: "Bem-vindo, admin!", className: "bg-green-500 text-white" });
-        onAdminLogin && onAdminLogin(user);
+      if (data.type === 'admin') {
+        onAdminLogin && onAdminLogin(data);
       } else {
-        toast({ title: "Login Bem-Sucedido!", description: "Bem-vindo!", className: "bg-green-500 text-white" });
-        onLoginSuccess && onLoginSuccess(user);
+        onLoginSuccess && onLoginSuccess(data);
       }
-      setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (

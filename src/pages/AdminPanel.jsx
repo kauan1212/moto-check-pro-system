@@ -5,9 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Copy } from 'lucide-react';
-
-const getUsers = () => JSON.parse(localStorage.getItem('users') || '[]');
-const setUsers = (users) => localStorage.setItem('users', JSON.stringify(users));
+import { supabase } from '@/lib/customSupabaseClient';
 
 const emptyClient = { email: '', password: '', nomeEmpresa: '', logoUrl: '', endereco: '', telefone: '', status: 'active', type: 'cliente' };
 
@@ -15,74 +13,86 @@ const AdminPanel = ({ onLogout }) => {
   const { toast } = useToast();
   const [users, setUsersState] = useState([]);
   const [newClient, setNewClient] = useState(emptyClient);
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    setUsersState(getUsers().filter(u => u.type === 'cliente'));
+    fetchUsers();
   }, []);
 
-  const refreshUsers = () => {
-    setUsersState(getUsers().filter(u => u.type === 'cliente'));
+  const fetchUsers = async () => {
+    const { data, error } = await supabase.from('users').select('*').eq('type', 'cliente');
+    if (error) {
+      toast({ title: 'Erro ao buscar clientes', description: error.message, variant: 'destructive' });
+    } else {
+      setUsersState(data);
+    }
   };
 
   const handleInputChange = (e) => {
     setNewClient({ ...newClient, [e.target.name]: e.target.value });
   };
 
-  const handleCreateOrUpdate = (e) => {
+  const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
     if (!newClient.email || !newClient.password || !newClient.nomeEmpresa) {
       toast({ title: 'Campos obrigatórios', description: 'Preencha e-mail, senha e nome da empresa.', variant: 'destructive' });
       return;
     }
-    const allUsers = getUsers();
-    if (editingIndex !== null) {
+    if (editingId) {
       // Editar
-      const idx = allUsers.findIndex(u => u.id === users[editingIndex].id);
-      allUsers[idx] = { ...allUsers[idx], ...newClient };
-      setUsers(allUsers);
-      toast({ title: 'Cliente atualizado!' });
+      const { error } = await supabase.from('users').update({ ...newClient }).eq('id', editingId);
+      if (error) {
+        toast({ title: 'Erro ao atualizar cliente', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Cliente atualizado!' });
+        setEditingId(null);
+        setNewClient(emptyClient);
+        fetchUsers();
+      }
     } else {
       // Criar
-      if (allUsers.find(u => u.email === newClient.email)) {
-        toast({ title: 'E-mail já cadastrado', variant: 'destructive' });
-        return;
+      const { data, error } = await supabase.from('users').insert([{ ...newClient }]);
+      if (error) {
+        toast({ title: 'Erro ao criar cliente', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Cliente criado!' });
+        setNewClient(emptyClient);
+        fetchUsers();
       }
-      allUsers.push({ ...newClient, id: Date.now() });
-      setUsers(allUsers);
-      toast({ title: 'Cliente criado!' });
     }
-    setNewClient(emptyClient);
-    setEditingIndex(null);
-    refreshUsers();
   };
 
-  const handleEdit = (idx) => {
-    setEditingIndex(idx);
-    setNewClient(users[idx]);
+  const handleEdit = (id) => {
+    setEditingId(id);
+    const client = users.find(u => u.id === id);
+    setNewClient({ ...client, password: '' }); // Não mostrar senha
   };
 
-  const handleDelete = (idx) => {
+  const handleDelete = async (id) => {
     if (!window.confirm('Tem certeza que deseja deletar esta conta?')) return;
-    const allUsers = getUsers();
-    const id = users[idx].id;
-    setUsers(allUsers.filter(u => u.id !== id));
-    toast({ title: 'Conta deletada!' });
-    refreshUsers();
+    const { error } = await supabase.from('users').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Erro ao deletar', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Conta deletada!' });
+      fetchUsers();
+    }
   };
 
-  const handleFreeze = (idx) => {
-    const allUsers = getUsers();
-    const id = users[idx].id;
-    const user = allUsers.find(u => u.id === id);
-    user.status = user.status === 'frozen' ? 'active' : 'frozen';
-    setUsers(allUsers);
-    toast({ title: user.status === 'frozen' ? 'Conta congelada!' : 'Conta ativada!' });
-    refreshUsers();
+  const handleFreeze = async (id) => {
+    const user = users.find(u => u.id === id);
+    const novoStatus = user.status === 'frozen' ? 'active' : 'frozen';
+    const { error } = await supabase.from('users').update({ status: novoStatus }).eq('id', id);
+    if (error) {
+      toast({ title: 'Erro ao atualizar status', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: novoStatus === 'frozen' ? 'Conta congelada!' : 'Conta ativada!' });
+      fetchUsers();
+    }
   };
 
   const handleCancelEdit = () => {
-    setEditingIndex(null);
+    setEditingId(null);
     setNewClient(emptyClient);
   };
 
@@ -127,8 +137,8 @@ const AdminPanel = ({ onLogout }) => {
               <img src={newClient.logoUrl} alt="Logo preview" className="h-16 mt-2 rounded shadow border" />
             )}
             <div className="flex gap-2">
-              <Button type="submit">{editingIndex !== null ? 'Salvar Alterações' : 'Criar Cliente'}</Button>
-              {editingIndex !== null && <Button type="button" variant="outline" onClick={handleCancelEdit}>Cancelar</Button>}
+              <Button type="submit">{editingId ? 'Salvar Alterações' : 'Criar Cliente'}</Button>
+              {editingId && <Button type="button" variant="outline" onClick={handleCancelEdit}>Cancelar</Button>}
             </div>
           </form>
         </CardContent>
@@ -150,7 +160,7 @@ const AdminPanel = ({ onLogout }) => {
               </tr>
             </thead>
             <tbody>
-              {users.map((u, idx) => (
+              {users.map((u) => (
                 <tr key={u.id} className="border-b">
                   <td>{u.email}</td>
                   <td>{u.nomeEmpresa}</td>
@@ -158,9 +168,9 @@ const AdminPanel = ({ onLogout }) => {
                   <td>{u.telefone}</td>
                   <td>{u.status === 'frozen' ? 'Congelada' : 'Ativa'}</td>
                   <td className="flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(idx)}>Editar</Button>
-                    <Button size="sm" variant="outline" onClick={() => handleFreeze(idx)}>{u.status === 'frozen' ? 'Ativar' : 'Congelar'}</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(idx)}>Deletar</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(u.id)}>Editar</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleFreeze(u.id)}>{u.status === 'frozen' ? 'Ativar' : 'Congelar'}</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(u.id)}>Deletar</Button>
                     <Button size="sm" variant="outline" onClick={() => handleCopyLink(u.id)} title="Copiar link público">
                       <Copy size={16} />
                     </Button>
