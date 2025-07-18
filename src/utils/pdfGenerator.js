@@ -180,6 +180,7 @@ export const generatePDF = async (vistoriaData, checklistItems, nomeEmpresa, tel
         const photosPerRow = Math.floor(contentWidth / (photoWidth + photoGap));
         let currentX = margin + 8;
         let rowPhotoCount = 0;
+        let initialY = yPosition;
         for(let i = 0; i < fotos.length; i++) {
            const foto = fotos[i];
            if (rowPhotoCount > 0 && rowPhotoCount % photosPerRow === 0) {
@@ -196,7 +197,10 @@ export const generatePDF = async (vistoriaData, checklistItems, nomeEmpresa, tel
            currentX += photoWidth + photoGap;
            rowPhotoCount++;
         }
-        yPosition += photoHeight + photoGap;
+        // Só incremente yPosition se houver pelo menos uma linha de fotos
+        if (fotos.length > 0) {
+          yPosition += photoHeight + photoGap;
+        }
       }
       yPosition += itemGap / 1.5; 
     }

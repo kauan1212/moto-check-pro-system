@@ -134,7 +134,7 @@ const App = () => {
   if (hash === 'agendar-publico') {
     return (
       <PwaInstallProvider>
-        <LoginPage onLoginSuccess={setUser} onAdminLogin={u => { setUser(u); setAdminMode(true); }} />
+        <AgendamentoPublicoPage />
       </PwaInstallProvider>
     );
   }
