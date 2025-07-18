@@ -179,20 +179,22 @@ export const generatePDF = async (vistoriaData, checklistItems, nomeEmpresa, tel
         const photoHeight = 75; 
         const photosPerRow = Math.floor(contentWidth / (photoWidth + photoGap));
         let currentX = margin + 8;
-        
+        let rowPhotoCount = 0;
         for(let i = 0; i < fotos.length; i++) {
            const foto = fotos[i];
-           if (i > 0 && i % photosPerRow === 0) {
+           if (rowPhotoCount > 0 && rowPhotoCount % photosPerRow === 0) {
              currentX = margin + 8;
              yPosition += photoHeight + photoGap;
+             rowPhotoCount = 0;
            }
            checkPageBreak(photoHeight + photoGap);
            try {
               pdf.addImage(foto, 'JPEG', currentX, yPosition, photoWidth, photoHeight);
-            } catch (error) {
+           } catch (error) {
               addText('[Erro Foto]', currentX + photoWidth/2, yPosition + photoHeight / 2, { fontSize: 7, color: [255,0,0], align: 'center'});
-            }
-            currentX += photoWidth + photoGap;
+           }
+           currentX += photoWidth + photoGap;
+           rowPhotoCount++;
         }
         yPosition += photoHeight + photoGap;
       }
@@ -224,7 +226,6 @@ export const generatePDF = async (vistoriaData, checklistItems, nomeEmpresa, tel
   pdf.setDrawColor(100, 100, 100);
   pdf.line(signatureXvistoriador, signatureY + signatureHeight + 4, signatureXvistoriador + signatureWidth, signatureY + signatureHeight + 4);
   let textYVistoriador = addText('Vistoriador', signatureXvistoriador, signatureY + signatureHeight + 12, { fontSize: 8, maxWidth: signatureWidth });
-  addText(`CNPJ: ${vistoriaData.cnpjEmpresa}`, signatureXvistoriador, textYVistoriador, { fontSize: 7, maxWidth: signatureWidth });
 
 
   if (vistoriaData.assinaturaLocatario) {

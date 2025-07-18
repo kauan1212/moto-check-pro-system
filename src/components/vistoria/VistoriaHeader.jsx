@@ -31,9 +31,6 @@ const VistoriaHeader = ({
               <CardTitle className="text-lg sm:text-xl font-bold leading-tight">
                 {nomeEmpresa}
               </CardTitle>
-              <p className="text-xxs sm:text-xs font-medium opacity-90 leading-tight">
-                {descricaoEmpresa}
-              </p>
             </div>
           </div>
           <div className="text-center xxs:text-right space-y-0.5 mt-1 xxs:mt-0">
