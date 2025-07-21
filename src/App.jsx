@@ -5,8 +5,9 @@ import LocatariosPage from '@/pages/LocatariosPage';
 import MotosPage from '@/pages/MotosPage';
 import AgendamentosPage from '@/pages/AgendamentosPage';
 import AgendamentoPublicoPage from '@/pages/AgendamentoPublicoPage'; 
+import LoginPage from '@/pages/LoginPage';
 import { Button } from '@/components/ui/button';
-import { FileText, UserPlus, Bike, CalendarClock } from 'lucide-react';
+import { FileText, UserPlus, Bike, CalendarClock, LogOut } from 'lucide-react';
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -15,13 +16,15 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import VistoriaHeader from '@/components/vistoria/VistoriaHeader';
 import { PwaInstallProvider } from '@/components/PwaInstallPrompt';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const App = () => {
+  const { user, loading, signOut } = useAuth();
   const [currentPage, setCurrentPage] = useState('vistoria'); 
   const [vistoriaInitialData, setVistoriaInitialData] = useState(null);
   const [agendamentoParaAnalisar, setAgendamentoParaAnalisar] = useState(null);
   const { toast } = useToast();
-  const SEU_NUMERO_WHATSAPP = "5515991653601"; 
+  const SEU_NUMERO_WHATSAPP = "5515991653601";
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -107,6 +110,38 @@ const App = () => {
     setAgendamentoParaAnalisar(null);
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso.",
+    });
+  };
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login page if user is not authenticated
+  if (!user) {
+    return (
+      <PwaInstallProvider>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+          <LoginPage />
+          <Toaster />
+        </div>
+      </PwaInstallProvider>
+    );
+  }
+
   const renderPage = () => {
     switch (currentPage) {
       case 'vistoria':
@@ -150,11 +185,16 @@ const App = () => {
                       <Bike size={14} /> <span className="hidden sm:inline">Motos</span>
                     </Button>
                   </NavigationMenuItem>
-                  <NavigationMenuItem>
-                     <Button variant={currentPage === 'agendamentos' ? "default" : "ghost"} onClick={() => navigateTo('agendamentos')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
-                      <CalendarClock size={14} /> <span className="hidden sm:inline">Agendamentos</span>
-                    </Button>
-                  </NavigationMenuItem>
+                   <NavigationMenuItem>
+                      <Button variant={currentPage === 'agendamentos' ? "default" : "ghost"} onClick={() => navigateTo('agendamentos')} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5">
+                       <CalendarClock size={14} /> <span className="hidden sm:inline">Agendamentos</span>
+                     </Button>
+                   </NavigationMenuItem>
+                   <NavigationMenuItem>
+                     <Button variant="ghost" onClick={handleSignOut} className="flex items-center gap-1 text-xxs px-1.5 py-1 sm:text-xs sm:px-2 sm:py-1.5 text-red-600 hover:text-red-700">
+                       <LogOut size={14} /> <span className="hidden sm:inline">Sair</span>
+                     </Button>
+                   </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
             </div>

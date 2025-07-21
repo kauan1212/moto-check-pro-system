@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { LogIn, Eye, EyeOff, UserPlus, Save } from 'lucide-react';
+import { LogIn, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import VistoriaHeader from '@/components/vistoria/VistoriaHeader';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
-const LoginPage = ({ onLoginSuccess }) => {
+const LoginPage = () => {
   const { toast } = useToast();
-  const [username, setUsername] = useState('');
+  const { signIn, signUp } = useAuth();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,14 +20,8 @@ const LoginPage = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('locauto_user_credentials');
-    if (!storedUser) {
-      setIsRegistering(true);
-    }
-  }, []);
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       toast({
@@ -45,55 +41,41 @@ const LoginPage = ({ onLoginSuccess }) => {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const credentials = { username, password };
-      localStorage.setItem('locauto_user_credentials', JSON.stringify(credentials));
+    
+    const { error } = await signUp(email, password, {
+      emailRedirectTo: `${window.location.origin}/`
+    });
+    
+    if (!error) {
       toast({
         title: "Cadastro Realizado!",
-        description: "Sua conta foi criada. Faça login para continuar.",
+        description: "Verifique seu email para confirmar a conta.",
         className: "bg-green-500 text-white",
       });
       setIsRegistering(false);
-      setUsername('');
+      setEmail('');
       setPassword('');
       setConfirmPassword('');
-      setIsLoading(false);
-    }, 500);
+    }
+    
+    setIsLoading(false);
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      const storedCredentialsString = localStorage.getItem('locauto_user_credentials');
-      if (!storedCredentialsString) {
-        toast({
-          title: "Conta Não Encontrada",
-          description: "Nenhuma conta cadastrada. Por favor, crie uma conta.",
-          variant: "destructive",
-        });
-        setIsRegistering(true);
-        setIsLoading(false);
-        return;
-      }
-      
-      const storedCredentials = JSON.parse(storedCredentialsString);
-      if (username === storedCredentials.username && password === storedCredentials.password) {
-        toast({
-          title: "Login Bem-Sucedido!",
-          description: "Bem-vindo de volta!",
-          className: "bg-green-500 text-white",
-        });
-        onLoginSuccess();
-      } else {
-        toast({
-          title: "Falha no Login",
-          description: "Usuário ou senha incorretos. Tente novamente.",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 500);
+    
+    const { error } = await signIn(email, password);
+    
+    if (!error) {
+      toast({
+        title: "Login Bem-Sucedido!",
+        description: "Bem-vindo de volta!",
+        className: "bg-green-500 text-white",
+      });
+    }
+    
+    setIsLoading(false);
   };
 
   const cardTitle = isRegistering ? "Criar Nova Conta" : "Acesso Restrito";
@@ -117,13 +99,13 @@ const LoginPage = ({ onLoginSuccess }) => {
         <CardContent>
           <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-6">
             <div>
-              <Label htmlFor="username">Usuário</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Crie ou digite seu usuário"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={isRegistering ? "Digite seu email" : "Digite seu email"}
                 required
                 className="mt-1"
                 disabled={isLoading}
@@ -184,16 +166,21 @@ const LoginPage = ({ onLoginSuccess }) => {
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   >
-                    {isRegistering ? <Save className="mr-2 h-5 w-5" /> : <LogIn className="mr-2 h-5 w-5" />}
+                    {isRegistering ? <UserPlus className="mr-2 h-5 w-5" /> : <LogIn className="mr-2 h-5 w-5" />}
                   </motion.div>
                 ) : (
-                  isRegistering ? <Save className="mr-2 h-5 w-5" /> : <LogIn className="mr-2 h-5 w-5" />
+                  isRegistering ? <UserPlus className="mr-2 h-5 w-5" /> : <LogIn className="mr-2 h-5 w-5" />
                 )}
                 {isRegistering ? "Criar Conta" : "Entrar"}
               </Button>
               {!isRegistering && (
-                <Button type="button" variant="link" onClick={() => {setIsRegistering(true); setUsername(''); setPassword('');}} disabled={isLoading}>
+                <Button type="button" variant="link" onClick={() => {setIsRegistering(true); setEmail(''); setPassword('');}} disabled={isLoading}>
                   Não tem uma conta? Crie uma agora!
+                </Button>
+              )}
+              {isRegistering && (
+                <Button type="button" variant="link" onClick={() => {setIsRegistering(false); setEmail(''); setPassword(''); setConfirmPassword('');}} disabled={isLoading}>
+                  Já tem uma conta? Faça login!
                 </Button>
               )}
             </CardFooter>
